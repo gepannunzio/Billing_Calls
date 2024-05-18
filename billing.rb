@@ -1,15 +1,5 @@
 require 'date'
 
-class Client
-  attr_reader :country, :area
-
-  def initialize(country, area)
-    @country = country
-    @area = area
-  end
-
-end
-
 class Call
   attr_reader :call_lenght, :day_hour, :number_called
 
@@ -81,8 +71,7 @@ class Bill
 end
 
 def get_call_length(start_date, end_date)
-  res = ((end_date - start_date) * 24 * 60 * 60).to_i
-  res = res/60
+  res = ((end_date - start_date) * 24 * 60).to_i
   res
 end
 
