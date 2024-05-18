@@ -1,5 +1,4 @@
 # Billing_Calls
-Billing system for National, International and Local Calls
 
 **Operating System**: Fedora, unix version: 6.8.9-200.fc39.x86_64
 
