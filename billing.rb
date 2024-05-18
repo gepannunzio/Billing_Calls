@@ -11,6 +11,7 @@ class Call
   end
 end
 
+# Subclass from Local Calls 
 class LocalCall < Call
   def cost
     total_cost = 0.0
@@ -44,6 +45,7 @@ class LocalCall < Call
   end
 end
 
+# Subclass from Domestic Calls 
 class DomesticCall < Call
   def initialize(start_time, end_time, domestic_cost)
     super(start_time, end_time)
@@ -55,6 +57,7 @@ class DomesticCall < Call
   end
 end
 
+# Subclass from International Calls 
 class InternationalCall < Call
   def initialize(start_time, end_time, international_cost)
     super(start_time, end_time)
@@ -66,15 +69,16 @@ class InternationalCall < Call
   end
 end
 
+# Bill class, in charge of grab data from DB and delegate funcionalities like cost calculation to Call classes
 class Bill
   def initialize(standard_rate, international_cost, domestic_cost)
     @standard_rate = standard_rate
     @international_cost = international_cost
     @domestic_cost = domestic_cost
-    @calls = []
-    @local_calls = []
-    @international_calls = []
-    @domestic_calls = []
+    @calls = [] # Full list of class
+    @local_calls = [] # call filtered ( same international code and area code)
+    @international_calls = [] # calls filtered (different international code)
+    @domestic_calls = [] # calls filtered (same international code, same area code)
 
     @local_calls_total = 0
     @domestic_calls_total = 0
@@ -86,14 +90,14 @@ class Bill
   end
 
   def get_call_length(start_date, end_date)
-    ((end_date - start_date) * 24 * 60).to_i
+    ((end_date - start_date) * 24 * 60).to_i #Difference in dates in minutes
   end
 
   def get_total(month)
     @calls.each do |call|
       if call[:start_full_date].month == month #Checks if call was in desired month
-        if call[:origin_country_code] == call[:dest_country_code]
-          if call[:origin_area_code] == call[:dest_area_code]
+        if call[:origin_country_code] == call[:dest_country_code] # Compare country code
+          if call[:origin_area_code] == call[:dest_area_code] # Compare area code
             current_call = LocalCall.new(call[:start_full_date], call[:end_full_date])
             cost = current_call.cost
             @local_calls_total += cost
@@ -112,7 +116,7 @@ class Bill
         end
       end
     end
-    @local_calls_total + @domestic_calls_total + @international_calls_total + @standard_rate
+    @local_calls_total + @domestic_calls_total + @international_calls_total + @standard_rate # Get grand total
   end
 
   def get_details
