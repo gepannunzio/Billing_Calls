@@ -24,7 +24,7 @@ Billing system for National, International and Local Calls
 
 3. **International and Domestic Costs**
     - I assume that international costs are defined by country and that I will count with a full list of them in my DB where I can pass it to the `Bill` class
-    - I assume that Domestic costs are defined depending on the area code. This could be more precise if we count with more specific information on each country costs by the area code for that country
+    - I assume that Domestic costs are defined depending on the area code and they are fixed for all the areas in the same country
     - In my code I stated some as part of an Example
 
 ## Thought Process
