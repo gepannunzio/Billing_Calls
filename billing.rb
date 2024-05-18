@@ -1,5 +1,7 @@
 require 'date'
 
+
+# Call class, this is the parent class containing its initialize function, cost function is delegated to its subclasses
 class Call
   attr_reader :call_length, :start_time, :end_time
 
@@ -94,14 +96,20 @@ class Bill
         if call[:origin_country_code] == call[:dest_country_code]
           if call[:origin_area_code] == call[:dest_area_code]
             current_call = LocalCall.new(call[:start_full_date], call[:end_full_date])
-            @local_calls_total += current_call.cost
+            cost = current_call.cost
+            @local_calls_total += cost
+            @local_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
           else
             current_call = DomesticCall.new(call[:start_full_date], call[:end_full_date], @domestic_cost)
+            cost = current_call.cost
             @domestic_calls_total += current_call.cost
+            @domestic_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
           end
         else
           current_call = InternationalCall.new(call[:start_full_date], call[:end_full_date], @international_cost)
+          cost = current_call.cost
           @international_calls_total += current_call.cost
+          @international_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
         end
       end
     end
@@ -109,24 +117,24 @@ class Bill
   end
 
   def get_details
-    puts "Standard Rate"
+    puts "Standard Rate: "
     puts "$#{'%.2f' % @standard_rate}"
-    puts "Local Calls"
+    puts "Local Calls: "
     puts @local_calls 
-    puts "$#{'%.2f' % @local_calls_total}"
-    puts "Domestic Calls"
+    puts "Total Local: $#{'%.2f' % @local_calls_total}"
+    puts "Domestic Calls: "
     puts @domestic_calls
-    puts "$#{'%.2f' % @domestic_calls_total}"
-    puts "International Calls"
+    puts "Total Domestic: $#{'%.2f' % @domestic_calls_total}"
+    puts "International Calls: "
     puts @international_calls
-    puts "$#{'%.2f' % @international_calls_total}"
+    puts "Total International: $#{'%.2f' % @international_calls_total}"
   end
 end
 
 # Get Costs from DB (assuming this is internal DB, I assume the data is diggested priorly)
 # It would be good to have prior knowledge of what type of object we are working as to minimize 
 # Class validation. In this case I will asume I dont count with that information
-standard_rate = 30.0
+standard_rate =  30.0
 domestic_cost = 0.5
 international_cost = 2.0
 
@@ -175,11 +183,14 @@ details.each do |call|
 end
 
 # Choose month to calculate costs
+puts("Select Month Number to Calculate: ")
 month = gets.to_i
 
 # Calculate the total bill for May (month 5)
 total = bill.get_total(month)
+puts " "
+
 #Give detailed breakdown on bill
-details = bill.get_details
 puts "Month to liquidate: #{'%i' % month}"
+details = bill.get_details
 puts "Total de la factura: $#{'%.2f' % total}"
