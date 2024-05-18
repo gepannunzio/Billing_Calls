@@ -188,9 +188,20 @@ example3 = {
   end_full_date: DateTime.new(2024, 5, 18, 14, 15, 0) # 15 minutes
 }
 
+example4 = {
+  origin_country_code: "1",
+  origin_area_code: "606",
+  origin_number: "1113537",
+  dest_country_code: "54",
+  dest_area_code: "11",
+  dest_number: "5808909",
+  start_full_date: DateTime.new(2024, 3, 18, 14, 0, 0),
+  end_full_date: DateTime.new(2024, 3, 18, 14, 15, 0) # 15 minutes
+}
+
 # Grouping calls taken from DB in one array for better management
 
-details = [example1, example2, example3]
+details = [example1, example2, example3, example4]
 
 # Create the bill object and adding the call taken from DB
 bill = Bill.new(standard_rate, international_cost_US, domestic_cost_US)
@@ -199,7 +210,7 @@ details.each do |call|
   bill.add_call(call)
 end
 
-# Choose month to calculate costs
+# Choose month to calculate costs (examples are for month 5 and 3)
 puts("Select Month Number to Calculate: ")
 month = gets.to_i
 
