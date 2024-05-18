@@ -7,7 +7,7 @@ Billing system for National, International and Local Calls
 
 ## Assumptions
 
-1. **Database Source**: It is assumed that phone calls, standard rate, and both international and domestic rates are sourced from a database.
+1. **Database Source**: It is assumed that phone calls, standard rate, and both international and domestic rates are sourced from a database and they are stored without errors.
 2. **Phone Call Logs Format**:
     ```ruby
     phone_call = {

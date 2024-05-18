@@ -1,6 +1,5 @@
 require 'date'
 
-
 # Call class, this is the parent class containing its initialize function, cost function is delegated to its subclasses
 class Call
   attr_reader :call_length, :start_time, :end_time
