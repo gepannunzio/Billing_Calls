@@ -1,114 +1,185 @@
 require 'date'
 
 class Call
-  attr_reader :call_lenght, :day_hour, :number_called
+  attr_reader :call_length, :start_time, :end_time
 
-  def initialize(call_lenght,day_hour)    
-      @call_lenght = call_lenght
-      @day_hour = day_hour
+  def initialize(start_time, end_time)
+    @start_time = start_time
+    @end_time = end_time
+    @call_length = ((end_time - start_time) * 24 * 60).to_i # Calculate duration in minutes
   end
-
 end
 
 class LocalCall < Call
   def cost
-    day = @day_hour.wday
-    hour = @day_hour.hour
-    if (1..5).include?(day) # Días hábiles (lunes a viernes)
-      if (8..19).include?(hour)  # Franja cara
-        @call_lenght * 0.20
-      else  # Franja barata
-        @call_lenght * 0.10
+    total_cost = 0.0
+    current_time = @start_time
+
+    while current_time < @end_time
+      day = current_time.wday
+      hour = current_time.hour
+
+      if (1..5).include?(day) # Weekdays (Monday to Friday)
+        if (8..19).include?(hour) # Peak hours
+          rate = 0.20
+        else # Off-peak hours
+          rate = 0.10
+        end
+      else # Saturdays and Sundays
+        rate = 0.10
       end
-    else  # Sábados y domingos
-      @call_lenght * 0.10
+
+      # Checks if we are closer to the next hour or if the end time is in this hour (second option only will happen in last iteration)
+      next_hour = DateTime.new(current_time.year, current_time.month, current_time.day, current_time.hour + 1)
+      duration = [(next_hour - current_time) * 24 * 60, (@end_time - current_time) * 24 * 60].min
+
+      # Add to total cost hour by hour so as to be precise in which rate should apply in each case
+      total_cost += duration * rate
+
+      current_time = next_hour
     end
+
+    total_cost
   end
 end
 
-# Clase para las llamadas nacionales
 class DomesticCall < Call
-  def initialize(call_lenght, day_hour, domestic_cost)
-    super(call_lenght, day_hour)
+  def initialize(start_time, end_time, domestic_cost)
+    super(start_time, end_time)
     @cost_per_minute = domestic_cost
   end
 
   def cost
-    @call_lenght * @cost_per_minute
+    @call_length * @cost_per_minute
   end
 end
 
-# Clase para las llamadas internacionales
 class InternationalCall < Call
-  def initialize(call_lenght, day_hour, international_cost)
-    super(call_lenght, day_hour)
+  def initialize(start_time, end_time, international_cost)
+    super(start_time, end_time)
     @cost_per_minute = international_cost
   end
 
   def cost
-    @call_lenght * @cost_per_minute
+    @call_length * @cost_per_minute
   end
 end
 
-# Clase para la factura mensual
 class Bill
-  def initialize(standard_rate)
+  def initialize(standard_rate, international_cost, domestic_cost)
     @standard_rate = standard_rate
+    @international_cost = international_cost
+    @domestic_cost = domestic_cost
     @calls = []
+    @local_calls = []
+    @international_calls = []
+    @domestic_calls = []
+
+    @local_calls_total = 0
+    @domestic_calls_total = 0
+    @international_calls_total = 0
   end
 
   def add_call(call)
     @calls << call
   end
 
-  def get_total
-    total = @standard_rate
+  def get_call_length(start_date, end_date)
+    ((end_date - start_date) * 24 * 60).to_i
+  end
+
+  def get_total(month)
     @calls.each do |call|
-      total += call.cost
+      if call[:start_full_date].month == month #Checks if call was in desired month
+        if call[:origin_country_code] == call[:dest_country_code]
+          if call[:origin_area_code] == call[:dest_area_code]
+            current_call = LocalCall.new(call[:start_full_date], call[:end_full_date])
+            @local_calls_total += current_call.cost
+          else
+            current_call = DomesticCall.new(call[:start_full_date], call[:end_full_date], @domestic_cost)
+            @domestic_calls_total += current_call.cost
+          end
+        else
+          current_call = InternationalCall.new(call[:start_full_date], call[:end_full_date], @international_cost)
+          @international_calls_total += current_call.cost
+        end
+      end
     end
-    total
+    @local_calls_total + @domestic_calls_total + @international_calls_total + @standard_rate
+  end
+
+  def get_details
+    puts "Standard Rate"
+    puts "$#{'%.2f' % @standard_rate}"
+    puts "Local Calls"
+    puts @local_calls 
+    puts "$#{'%.2f' % @local_calls_total}"
+    puts "Domestic Calls"
+    puts @domestic_calls
+    puts "$#{'%.2f' % @domestic_calls_total}"
+    puts "International Calls"
+    puts @international_calls
+    puts "$#{'%.2f' % @international_calls_total}"
   end
 end
 
-def get_call_length(start_date, end_date)
-  res = ((end_date - start_date) * 24 * 60).to_i
-  res
-end
-
-
-#Get From DB (I will suppose that this is my internal DB, where I have every country code and the Standard Rate)
+# Get Costs from DB (assuming this is internal DB, I assume the data is diggested priorly)
+# It would be good to have prior knowledge of what type of object we are working as to minimize 
+# Class validation. In this case I will asume I dont count with that information
 standard_rate = 30.0
 domestic_cost = 0.5
 international_cost = 2.0
-country = { "54" => "Arg", "1" => "Us", "55" => "Br" }
 
-# Crear la factura
-bill = Bill.new(standard_rate)
+example1 = {
+  origin_country_code: "1",
+  origin_area_code: "606",
+  origin_number: "1113537",
+  dest_country_code: "1",
+  dest_area_code: "204",
+  dest_number: "9052034",
+  start_full_date: DateTime.new(2024, 5, 13, 9, 0, 0),
+  end_full_date: DateTime.new(2024, 5, 13, 9, 10, 0)
+}
 
-# I assume that I will be receiving data with the following format [orgin_number, dest_number, start_full_date, end_full_date]
-# I will assume that I have a parser function that is able to retrieve country code from a number, it should consist of purifing the number and converting it to string, expecting it to be received in a specific format
-# After the parsing, the final input will be in the following format
-# {origin_country_code, origin_area_code, origin_number, dest_country_code, dest_area_code, dest_number, start_full_date, end_full_date]}
-example1 = {"origin_country_code" => "1", "origin_area_code" => "606", "origin_number" => "1113537", "dest_country_code" => "1", "dest_area_code" => "204", "dest_number" => "9052034","start_full_date" => DateTime.new(2024, 5, 13, 9, 0, 0), "end_full_date" => DateTime.new(2024, 5, 13, 9, 10, 0)}
-example2 = {"origin_country_code" => "54", "origin_area_code" => "606", "origin_number" => "1113537", "dest_country_code" => "1", "dest_area_code" => "204", "dest_number" => "9052034","start_full_date" => DateTime.new(2024, 5, 13, 21, 0, 0), "end_full_date" => DateTime.new(2024, 5, 13, 21, 20, 0)}
-example3 = {"origin_country_code" => "1", "origin_area_code" => "606", "origin_number" => "1113537", "dest_country_code" => "1", "dest_area_code" => "606", "dest_number" => "7778909","start_full_date" => DateTime.new(2024, 5, 18, 14, 0, 0), "end_full_date" => DateTime.new(2024, 5, 18, 14, 15, 0)}
+example2 = {
+  origin_country_code: "54",
+  origin_area_code: "606",
+  origin_number: "1113537",
+  dest_country_code: "1",
+  dest_area_code: "204",
+  dest_number: "9052034",
+  start_full_date: DateTime.new(2024, 5, 13, 21, 0, 0),
+  end_full_date: DateTime.new(2024, 5, 13, 21, 20, 0)
+}
 
-details = [example1,example2,example3]
+example3 = {
+  origin_country_code: "1",
+  origin_area_code: "606",
+  origin_number: "1113537",
+  dest_country_code: "1",
+  dest_area_code: "606",
+  dest_number: "7778909",
+  start_full_date: DateTime.new(2024, 5, 18, 14, 0, 0),
+  end_full_date: DateTime.new(2024, 5, 18, 14, 15, 0)
+}
 
-for i in (0...details.length)
-  if (details[i]["end_full_date"].month == Date.today.month)
-    if (details[i]["origin_country_code"] == details[i]["dest_country_code"]) 
-      if (details[i]["origin_area_code"] == details[i]["dest_area_code"])
-        bill.add_call(LocalCall.new(get_call_length(details[i]["start_full_date"], details[i]["end_full_date"]), details[i]["start_full_date"]))
-      else
-        bill.add_call(DomesticCall.new(get_call_length(details[i]["start_full_date"], details[i]["end_full_date"]), details[i]["start_full_date"], domestic_cost))
-      end
-    else
-      bill.add_call(InternationalCall.new(get_call_length(details[i]["start_full_date"], details[i]["end_full_date"]), details[i]["start_full_date"], international_cost))
-    end
-  end
+# Grouping calls taken from DB in one array for better management
+
+details = [example1, example2, example3]
+
+# Create the bill object and adding the call taken from DB
+bill = Bill.new(standard_rate, international_cost, domestic_cost)
+
+details.each do |call|
+  bill.add_call(call)
 end
-# Calcular el total de la factura
-total = bill.get_total
-puts "Total de la factura: $#{'%.2f' % total}"
 
+# Choose month to calculate costs
+month = gets.to_i
+
+# Calculate the total bill for May (month 5)
+total = bill.get_total(month)
+#Give detailed breakdown on bill
+details = bill.get_details
+puts "Month to liquidate: #{'%i' % month}"
+puts "Total de la factura: $#{'%.2f' % total}"
