@@ -103,13 +103,13 @@ class Bill
             @local_calls_total += cost
             @local_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
           else
-            current_call = DomesticCall.new(call[:start_full_date], call[:end_full_date], @domestic_cost)
+            current_call = DomesticCall.new(call[:start_full_date], call[:end_full_date], @domestic_cost[call[:dest_area_code]])
             cost = current_call.cost
             @domestic_calls_total += current_call.cost
             @domestic_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
           end
         else
-          current_call = InternationalCall.new(call[:start_full_date], call[:end_full_date], @international_cost)
+          current_call = InternationalCall.new(call[:start_full_date], call[:end_full_date], @international_cost[call[:dest_country_code]])
           cost = current_call.cost
           @international_calls_total += current_call.cost
           @international_calls << ["Source: " << call[:origin_country_code] << "-" << call[:origin_area_code] << "-" << call[:origin_number] << "  " << "Destination: " << call[:dest_country_code] << "-" << call[:dest_area_code] << "-" << call[:dest_number] << "  " << "$#{'%.2f' % cost}" ]
@@ -137,9 +137,18 @@ end
 # Get Costs from DB (assuming this is internal DB, I assume the data is diggested priorly)
 # It would be good to have prior knowledge of what type of object we are working as to minimize 
 # Class validation. In this case I will asume I dont count with that information
+
+#I assume I will have a complete list with all country and area codes related with their particular 
+#costs. I also assume that costs for specific Areas are defined by the area code independently on the country the call was made
 standard_rate =  30.0
-domestic_cost = 0.5
-international_cost = 2.0
+domestic_cost = {
+  "606"=> 0.3,
+  "204"=> 0.5
+}
+international_cost = {
+  "1" => 2.0,
+  "54"=> 3.0
+}
 
 example1 = {
   origin_country_code: "1",

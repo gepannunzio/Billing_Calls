@@ -21,19 +21,21 @@ Billing system for National, International and Local Calls
       end_full_date: DateTime.new(2024, 5, 13, 9, 10, 0)
     }
     ```
-3. **Rates**:
-    - International Rate: 2.0 (modifiable)
-    - Domestic Rate: 0.5 (modifiable)
+
+3. **International and Domestic Costs**
+    - I assume that international costs are defined by country and that I will count with a full list of them in my DB where I can pass it to the `Bill` class
+    - I assume that Domestic costs are defined depending on the area code. This could be more precise if we count with more specific information on each country costs by the area code for that country
+    - In my code I stated some as part of an Example
 
 ## Thought Process
 
-1. **Initialization**: A `Billing` class will be initialized to handle the billing process.
+1. **Initialization**: A `Bill` class will be initialized to handle the billing process.
 2. **Processing Phone Call Logs**: The class will receive and process phone call logs related to the client.
 3. **Calculation**: 
-    - After processing all the information, the `Billing` class will calculate the total cost for the desired month.
-    - The total cost is obtained by iterating over an array of calls stored in the `Billing` class, which contains information about each call.
+    - After processing all the information, the `Bill` class will calculate the total cost for the desired month.
+    - The total cost is obtained by iterating over an array of calls stored in the `Bill` class, which contains information about each call.
 4. **Cost Breakdown**: 
-    - The `Billing` class will maintain three different counters for Domestic, Local, and International total costs. This is useful for providing a detailed breakdown of the total cost, which is the sum of these three costs plus the standard rate (initialized as a variable).
+    - The `Bill` class will maintain three different counters for Domestic, Local, and International total costs. This is useful for providing a detailed breakdown of the total cost, which is the sum of these three costs plus the standard rate (initialized as a variable).
     - Depending on the type of call, the partial total cost will be modified accordingly during each iteration:
         1. If `origin_country_code` is different from `dest_country_code`, it is an international call.
         2. If `origin_area_code` is different from `dest_area_code`, it is a domestic call.
