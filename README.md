@@ -26,6 +26,9 @@
     - I assume that Domestic costs are defined depending on the area code and they are fixed for all the areas in the same country
     - In my code I stated some as part of an Example
 
+4. **Run file**
+    - I assume that `run.rb` is my run function where I do the pre-proccessing of the information including extraction from DB and get user input. It will also make the calls to the correspondant class in order to execute 
+
 ## Thought Process
 
 1. **Initialization**: A `Bill` class will be initialized to handle the billing process.
